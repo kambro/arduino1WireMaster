@@ -20,6 +20,8 @@ void print_address_section(unsigned char *address) {
   for(int i = 0; i < 8; i++) {
     print_aligned_hex(address[i]);
   }  
+
+  print_content("\"");
 }
 
 void print_data_section(OneWire ds) {

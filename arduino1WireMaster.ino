@@ -10,7 +10,7 @@
 OneWire ds(DEVICE_PIN);
 
 void setup(void) {
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void send_data_to_one_wire_device(unsigned char addr[8], char *input, byte pin_state) {
@@ -48,6 +48,7 @@ void processMessage(char *content) {
       }
       
       aJsonObject *commandObject = aJson.getObjectItem(node, "command");
+      aJsonObject *sessionIdObject = aJson.getObjectItem(node, "session-id");
 
       if (NULL != commandObject && commandObject->type == aJson_String) {
         if (0 == strcmp(commandObject->valuestring, "list-devices")) {
@@ -68,7 +69,13 @@ void processMessage(char *content) {
           print_content("{\"message\": \"no data\"}");
           return;
       }
-      
+/*      
+      if (NULL != sessionIdObject && sessionIdObject->type == aJson_String) {
+          print_content("\", \"session-id\": \"");
+          print_content(sessionIdObject->valuestring);
+          print_content("\"");
+      }
+*/      
       counter++;
       
       if (1 == is_regular_array && items_number > counter) {
@@ -79,6 +86,7 @@ void processMessage(char *content) {
     if (is_regular_array) {
       print_content("]");
     }
+    aJson.deleteItem(root);
   }
 }
 

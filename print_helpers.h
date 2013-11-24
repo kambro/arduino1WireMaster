@@ -1,6 +1,7 @@
 
 void print_content(char *content) {
   Serial.print(content);
+  Serial.flush();
 }
 
 void print_aligned_hex(byte data) {

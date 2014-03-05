@@ -1,17 +1,27 @@
 
 void print_content(char *content) {
   Serial.print(content);
-  Serial.flush();
+}
+
+void align_hex(byte data, char *aligned_hex) {
+  char buffer[8] = "";
+  sprintf(buffer, "%X", data);
+
+  sprintf(aligned_hex, "%s%s", (1 == strlen(buffer) ? "0" : ""), buffer);
+}
+
+void convert_byte_array_to_char_array(unsigned int size, byte source[], char destination[]) {
+  unsigned int i;
+  
+  for (i = 0; i < size; i++) {
+    align_hex(source[i], &(destination[i*2]));
+  }
+  destination[(i * 2) + 1] = '\0';
 }
 
 void print_aligned_hex(byte data) {
-  char buffer[24] = "";
-  sprintf(buffer, "%X", data);
-
-  if (1 == strlen(buffer)) {
-    print_content("0");
-  }
-
+  char buffer[8] = "";
+  align_hex(data, buffer);
   print_content(buffer);
 }
 
@@ -25,26 +35,30 @@ void print_address_section(unsigned char *address) {
   print_content("\"");
 }
 
-void print_data_section(OneWire ds) {
-  unsigned char data[24];
-  
-  print_content("{\"data\": \"");
+void print_data_section(char *addr, OneWire ds) {
+  char data[64];
+  char buffer[128] = "";
+  int i;
 
-  for (int i = 0; i < 9; i++) {
-    data[i] = ds.read();
-    print_aligned_hex(data[i]);  
+  for (i = 0; i < 9; i++) {
+    align_hex(ds.read(), &(data[i*2]));
   }
 
-  print_content("\", \"crc\": \"");
+  data[(i * 2) + 1] = '\0';
 
-  print_aligned_hex((byte) OneWire::crc8(data, 8));  
+  sprintf(buffer, "{\"address\": \"%s\", \"crc\": \"%X\", \"data\": \"%s\"}", addr, addr[7], data);
 
-  print_content("\"}");
+  print_content(buffer);
 }
 
 void print_crc32_error_message(unsigned char addr[]) {
   char buffer[128] = "";
-  sprintf(buffer, "{\"address\": \"%s\", \"crc\": \"%X\", \"calculatedCRC\": \"%X\", \"message\": \"CRC is not valid\"}", addr, addr[7], OneWire::crc8(addr, 7));
+  char address[32];
+
+  convert_byte_array_to_char_array(8, addr, address);
+
+  sprintf(buffer, "{\"address\": \"%s\", \"crc\": \"%X\", \"calculatedCRC\": \"%X\", \"message\": \"CRC is not valid\"}", address, addr[7], OneWire::crc8(addr, 7));
+
   print_content(buffer);
 }
 

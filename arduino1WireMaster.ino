@@ -13,21 +13,23 @@ void setup(void) {
   Serial.begin(115200);
 }
 
-void send_data_to_one_wire_device(unsigned char addr[8], char *input, byte pin_state) {
+void send_data_to_one_wire_device(char *address, char *input, byte pin_state) {
   unsigned char buffer[128];
   unsigned int bytes_number = round((strlen(input) / 2.0));
   unsigned int counter;
+  unsigned char address_as_byte_array[8];
+  convert_char_arr_to_byte_arr(address, address_as_byte_array, 8);
 
   convert_char_arr_to_byte_arr(input, buffer, 128);
   
   ds.reset();
-  ds.select(addr);
+  ds.select(address_as_byte_array);
   
   for (counter = 0; counter < bytes_number; counter++) {
     ds.write(buffer[counter], pin_state);
   }
   
-  print_data_section(ds);
+  print_data_section(address, ds);
 }
 
 void processMessage(char *content) {
@@ -59,10 +61,8 @@ void processMessage(char *content) {
           aJsonObject *pin_state = aJson.getObjectItem(node, "pin-state");
           
           if (NULL != address && NULL != value) {
-            unsigned char address_as_byte_array[8];
-            convert_char_arr_to_byte_arr(address->valuestring, address_as_byte_array, 8);
 
-            send_data_to_one_wire_device(address_as_byte_array, value->valuestring, NULL == pin_state ? 0 : pin_state->valueint);
+            send_data_to_one_wire_device(address->valuestring, value->valuestring, NULL == pin_state ? 0 : pin_state->valueint);
           }
         }
       } else {
@@ -86,6 +86,7 @@ void processMessage(char *content) {
     if (is_regular_array) {
       print_content("]");
     }
+    print_content("\n");
     aJson.deleteItem(root);
   }
 }
